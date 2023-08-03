@@ -1,9 +1,9 @@
 import "./App.css";
+import { Movies } from "./components/Movies";
 import responseMovies from "./mocks/with-results.json";
 
 function App() {
-  const movies = responseMovies.results;
-  const hasMovies = movies?.length > 0;
+  const movies = responseMovies.Search;
 
   return (
     <div className="page">
@@ -16,18 +16,7 @@ function App() {
       </header>
 
       <main>
-        {hasMovies ? (
-          <ul>
-            {movies.map((movie) => (
-              <li key={movie.id}>
-                <h2>{movie.title}</h2>
-                <p>{movie.overview}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No movies found</p>
-        )}
+        <Movies movies={movies} />
       </main>
     </div>
   );
