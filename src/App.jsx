@@ -1,43 +1,21 @@
 import "./App.css";
 import { Movies } from "./components/Movies";
 import { useSearch } from "./hooks/useSearch";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { searchMovies } from "./services/movies";
-
-function useMovies({ search, sort }) {
-  const [movies, setMovies] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const previousSearch = useRef(search);
-
-  const getMovies = useCallback(async ({ search }) => {
-    if (search === previousSearch.current) return;
-    try {
-      setLoading(true);
-      setError(null);
-      previousSearch.current = search;
-      const newMovies = await searchMovies({ search });
-      setMovies(newMovies);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const sortedMovies = useMemo(() => {
-    return sort
-      ? [...movies].sort((a, b) => a.title.localeCompare(b.title))
-      : movies;
-  }, [sort, movies]);
-
-  return { movies: sortedMovies, getMovies, error, loading };
-}
+import { useMovies } from "./hooks/useMovies";
+import { useCallback, useState } from "react";
+import debounce from "just-debounce-it";
 
 function App() {
   const [sort, setSort] = useState(false);
   const { search, updateSearch, error } = useSearch();
   const { movies, getMovies } = useMovies({ search, sort });
+
+  const debouncedGetMovies = useCallback(
+    debounce((search) => {
+      getMovies({ search });
+    }, 300),
+    [getMovies]
+  );
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -47,6 +25,7 @@ function App() {
   const handleChange = (event) => {
     const newSearch = event.target.value;
     updateSearch(newSearch);
+    debouncedGetMovies(newSearch);
   };
 
   const handleSort = () => {
