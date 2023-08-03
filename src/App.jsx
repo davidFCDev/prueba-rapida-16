@@ -1,50 +1,40 @@
-import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { Movies } from "./components/Movies";
-import responseMovies from "./mocks/with-results.json";
+import { useSearch } from "./hooks/useSearch";
+import { useCallback, useRef, useState } from "react";
+import { searchMovies } from "./services/movies";
 
-function useSearch() {
-  const [search, updateSearch] = useState("");
+function useMovies({ search }) {
+  const [movies, setMovies] = useState([]);
   const [error, setError] = useState(null);
-  const isFirstInput = useRef(true);
+  const [loading, setLoading] = useState(false);
+  const previousSearch = useRef(search);
 
-  useEffect(() => {
-    if (isFirstInput.current) {
-      isFirstInput.current = search === "";
-      return;
+  const getMovies = useCallback(async ({ search }) => {
+    if (search === previousSearch.current) return;
+    try {
+      setLoading(true);
+      setError(null);
+      previousSearch.current = search;
+      const newMovies = await searchMovies({ search });
+      setMovies(newMovies);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
-    if (search === "") {
-      setError("No se puede buscar una película vacía");
-      return;
-    }
+  }, []);
 
-    if (search.length < 3) {
-      setError("La búsqueda debe tener al menos 3 caracteres");
-      return;
-    }
-
-    setError(null);
-  }, [search]);
-
-  return { search, updateSearch, error };
+  return { movies, getMovies, error, loading };
 }
 
 function App() {
   const { search, updateSearch, error } = useSearch();
-  const movies = responseMovies.Search;
-
-  const mappedMovies = movies.map((movie) => {
-    return {
-      id: movie.imdbID,
-      title: movie.Title,
-      year: movie.Year,
-      poster: movie.Poster,
-    };
-  });
+  const { movies, getMovies } = useMovies({ search });
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log("submit", search);
+    getMovies({ search });
   };
 
   const handleChange = (event) => {
@@ -70,7 +60,7 @@ function App() {
       </header>
 
       <main>
-        <Movies movies={mappedMovies} />
+        <Movies movies={movies} />
       </main>
     </div>
   );
