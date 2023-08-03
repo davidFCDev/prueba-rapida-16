@@ -3,22 +3,10 @@ import "./App.css";
 import { Movies } from "./components/Movies";
 import responseMovies from "./mocks/with-results.json";
 
-function useSearch() {}
-
-function App() {
+function useSearch() {
   const [search, updateSearch] = useState("");
   const [error, setError] = useState(null);
   const isFirstInput = useRef(true);
-  const movies = responseMovies.Search;
-
-  const mappedMovies = movies.map((movie) => {
-    return {
-      id: movie.imdbID,
-      title: movie.Title,
-      year: movie.Year,
-      poster: movie.Poster,
-    };
-  });
 
   useEffect(() => {
     if (isFirstInput.current) {
@@ -37,6 +25,22 @@ function App() {
 
     setError(null);
   }, [search]);
+
+  return { search, updateSearch, error };
+}
+
+function App() {
+  const { search, updateSearch, error } = useSearch();
+  const movies = responseMovies.Search;
+
+  const mappedMovies = movies.map((movie) => {
+    return {
+      id: movie.imdbID,
+      title: movie.Title,
+      year: movie.Year,
+      poster: movie.Poster,
+    };
+  });
 
   const handleSubmit = (event) => {
     event.preventDefault();
