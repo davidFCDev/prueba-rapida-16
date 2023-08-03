@@ -1,10 +1,10 @@
 import "./App.css";
 import { Movies } from "./components/Movies";
 import { useSearch } from "./hooks/useSearch";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { searchMovies } from "./services/movies";
 
-function useMovies({ search }) {
+function useMovies({ search, sort }) {
   const [movies, setMovies] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -25,12 +25,19 @@ function useMovies({ search }) {
     }
   }, []);
 
-  return { movies, getMovies, error, loading };
+  const sortedMovies = useMemo(() => {
+    return sort
+      ? [...movies].sort((a, b) => a.title.localeCompare(b.title))
+      : movies;
+  }, [sort, movies]);
+
+  return { movies: sortedMovies, getMovies, error, loading };
 }
 
 function App() {
+  const [sort, setSort] = useState(false);
   const { search, updateSearch, error } = useSearch();
-  const { movies, getMovies } = useMovies({ search });
+  const { movies, getMovies } = useMovies({ search, sort });
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -40,6 +47,10 @@ function App() {
   const handleChange = (event) => {
     const newSearch = event.target.value;
     updateSearch(newSearch);
+  };
+
+  const handleSort = () => {
+    setSort(!sort);
   };
 
   return (
@@ -54,6 +65,7 @@ function App() {
             type="text"
             placeholder="Matrix, avengers..."
           />
+          <input type="checkbox" onChange={handleSort} checked={sort} />
           <button>Search</button>
         </form>
         {error && <p style={{ color: "red" }}>{error}</p>}
